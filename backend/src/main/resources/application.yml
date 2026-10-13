@@ -7,7 +7,7 @@ spring:
   application:
     name: hospital-management-system
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:mysql}
+    active: ${SPRING_PROFILES_ACTIVE:h2}
   jpa:
     open-in-view: false
     show-sql: false
