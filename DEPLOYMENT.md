@@ -1,53 +1,41 @@
 # Separate Cloud Deployment Guide
 
-This guide explains how to deploy the **Hospital Management System** frontend and backend independently to free cloud hosting providers:
-- **Backend**: [Render.com](https://render.com) (or [Railway.app](https://railway.app))
+This guide explains how to deploy the **Hospital Management System**:
+- **Backend**: [Railway.app](https://railway.app) (with optional 1-Click MySQL)
 - **Frontend**: [Vercel.com](https://vercel.com) (or [Netlify.com](https://netlify.com))
 
 ---
 
-## Part 1: Deploy Backend to Render (Free)
+## Part 1: Deploy Backend to Railway.app
 
-### Step 1.1: Sign up & Create Web Service
-1. Sign in to [Render Dashboard](https://dashboard.render.com).
-2. Click **New +** → **Web Service**.
-3. Connect your GitHub repository:
-   `https://github.com/samarmohdabdul-stack/Hospital_management-system`
+### Method A: Zero-Config Deployment (H2 In-Memory Database)
 
-### Step 1.2: Configure Web Service
-Configure the settings in Render:
+1. Go to **[Railway.app](https://railway.app)** and sign in with GitHub.
+2. Click **+ New Project** → **Deploy from GitHub repo**.
+3. Select `samarmohdabdul-stack/Hospital_management-system`.
+4. Click on the newly created service card:
+   - Go to **Settings** → **Service Details**:
+     - **Root Directory**: set to `/backend` *(or leave blank; `railway.json` is provided)*
+   - Go to **Variables** and add:
+     - `SPRING_PROFILES_ACTIVE` = `h2`
+     - `CORS_ALLOWED_ORIGINS` = `http://localhost:5173,https://*.vercel.app,https://*.netlify.app,https://*.railway.app`
+     - `JWT_SECRET` = `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970`
+5. Go to **Settings** → **Networking** → Click **Generate Domain**.
+   - You will receive a domain like: `https://hospital-management-system-production.up.railway.app`
+6. Verify your API:
+   - Open: `https://<YOUR-RAILWAY-DOMAIN>/swagger-ui.html`
 
-| Field | Value |
-| :--- | :--- |
-| **Name** | `hospital-backend` *(or any unique name)* |
-| **Region** | Select closest to you (e.g., Oregon, Frankfurt) |
-| **Branch** | `main` |
-| **Root Directory** | `backend` |
-| **Runtime** | `Docker` *(select Docker to use the included multi-stage Dockerfile)* |
-| **Instance Type** | `Free` |
+---
 
-> **Note**: If choosing **Native Java** instead of Docker:
-> - **Build Command**: `mvn clean package -DskipTests`
-> - **Start Command**: `java -Dserver.port=$PORT -jar target/hospital-management-system-1.0.0.jar`
+### Method B: Production Deployment with Railway MySQL Database
 
-### Step 1.3: Set Environment Variables on Render
-Scroll to **Environment Variables** and add:
-
-| Key | Recommended Value | Description |
-| :--- | :--- | :--- |
-| `SPRING_PROFILES_ACTIVE` | `h2` | Uses zero-config in-memory database with preloaded demo data |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,https://*.vercel.app,https://*.netlify.app,https://*.onrender.com` | Permits requests from your frontend domains |
-| `JWT_SECRET` | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` | 256-bit HMAC secret |
-
-*(Optional: To use a live MySQL database instead of H2, change `SPRING_PROFILES_ACTIVE` to `mysql` and add `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` from [Aiven.io](https://aiven.io) or Railway).*
-
-### Step 1.4: Deploy & Copy URL
-Click **Deploy Web Service**.
-Once deployed, Render gives you a public URL such as:
-`https://hospital-backend-xxxx.onrender.com`
-
-Verify it by opening:
-`https://hospital-backend-xxxx.onrender.com/swagger-ui.html`
+1. In your Railway project, click **+ New** → **Database** → **Add MySQL**.
+2. Railway will instantly spin up a managed MySQL database and automatically provision variables (`MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD`).
+3. Click on your **backend service** → **Variables**:
+   - Set `SPRING_PROFILES_ACTIVE` = `mysql`
+   - Link the MySQL service or ensure the MySQL variables are shared.
+   - Spring Boot is pre-configured to automatically bind to Railway's `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, and `MYSQLPASSWORD`!
+4. The database will automatically run Flyway migrations and seed all sample doctors, patients, departments, and admin accounts upon startup!
 
 ---
 
